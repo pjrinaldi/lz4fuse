@@ -1,0 +1,6 @@
+Ensure lz4 is installed on your system according to their install instructions.
+Once installed run the following on the command line:
+
+g++ -Wall lz4fuse.cpp -I/usr/include/fuse3 -lfuse3 -lpthread -llz4 -o lz4mount
+
+This will produce an lz4mount executable which you can copy to your /usr/local/bin/
