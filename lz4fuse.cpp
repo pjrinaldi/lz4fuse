@@ -14,18 +14,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-/*
-#include <QFile>
-#include <QFileInfo>
-#include <QByteArray>
-#include <QDataStream>
-#include <QTextStream>
-#include <QCommandLineParser>
-#include <QStringList>
-#include <QDateTime>
-#include <QtEndian>
-#include <QDebug>
-*/
+
 #include <lz4.h>
 #include <lz4frame.h>
 
@@ -35,10 +24,21 @@
 
 void FindNextFrame(int64_t initialindex, std::vector<int64_t>* framelist, FILE* lz4file)
 {
+    if(lz4file == NULL) // file is not open, so open it
+    {
+	printf("Error, file is not open...\n");
+	//lz4file = fopen(lz4img, "rb");
+    }
+    else // file is open, continue doing something...
+    {
+	fseek(lz4file, initialindex, SEEK_SET);
+    }
+    /*
     if(lz4file != NULL)
 	printf("lz4file not null\n");
     else
 	printf("lz4file is null\n");
+    */
 }
 
 static std::string lz4img;
