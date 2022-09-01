@@ -225,6 +225,12 @@ static const struct fuse_operations wombat_oper = {
 */
 int main(int argc, char* argv[])
 {
+    printf("arg count: %d\n", argc);
+    if(argc < 3) // no arguments given, display help..
+    {
+	printf("wrong number of arguments... display help\n");
+	return 1;
+    }
     lz4img = argv[1];
     lz4mnt = argv[2];
     printf("lz4img path: %s\n", lz4img.c_str());
