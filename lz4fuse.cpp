@@ -31,7 +31,19 @@ void FindNextFrame(int64_t initialindex, std::vector<int64_t>* framelist, FILE* 
     }
     else // file is open, continue doing something...
     {
-	fseek(lz4file, initialindex, SEEK_SET);
+        /*
+        unsigned int curline = 0;
+        while(getline(lz4file, line))
+        {
+            curline++;
+            if(line.find(search, 0) != string::npos)
+                cout << "Found " << search << "line: " << curline << endl;
+        }
+        */
+	//fseek(lz4file, initialindex, SEEK_SET);
+        //char* buffer = NULL;
+        //fread(lz4file, 
+
     }
     /*
     if(lz4file != NULL)
