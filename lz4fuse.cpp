@@ -12,6 +12,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -31,26 +32,26 @@ void FindNextFrame(int64_t initialindex, std::vector<int64_t>* framelist, FILE* 
     }
     else // file is open, continue doing something...
     {
-        /*
-        unsigned int curline = 0;
-        while(getline(lz4file, line))
+        size_t result = 0;
+        fseek(lz4file, initialindex, SEEK_SET);
+        char* buffer = NULL;
+        buffer = (char*)malloc(sizeof(char)*4);
+        result = fread(buffer, 1, 4, lz4file);
+        if(result != 4)
+            exit(1);
+        std::stringstream ss;
+        for(int i=0; i < 4; i++)
         {
-            curline++;
-            if(line.find(search, 0) != string::npos)
-                cout << "Found " << search << "line: " << curline << endl;
+            ss << std::hex << (int)buffer[i];
         }
-        */
-	//fseek(lz4file, initialindex, SEEK_SET);
-        //char* buffer = NULL;
-        //fread(lz4file, 
-
+        std::string mystr = ss.str();
+        printf("hex string: %s\n", mystr.c_str());
+        if(mystr.compare("4224d18") == 0)
+            printf("frame header found.\n");
+        else
+            printf("frame header not found, comparison failed.\n");
+        free(buffer);
     }
-    /*
-    if(lz4file != NULL)
-	printf("lz4file not null\n");
-    else
-	printf("lz4file is null\n");
-    */
 }
 
 static std::string lz4img;
@@ -248,8 +249,12 @@ int main(int argc, char* argv[])
     printf("lz4img path: %s\n", lz4img.c_str());
     printf("lz4mnt path: %s\n", lz4mnt.c_str());
     FILE* lz4imgfile = NULL;
+    lz4imgfile = fopen(lz4img.c_str(), "rb");
     FindNextFrame(0, &frameindxlist, lz4imgfile);
     printf("Initial Start to lz4 fuse mount from wfi code.\n");
+    fclose(lz4imgfile);
+
+    return 0;
 }
 
 /*
