@@ -32,6 +32,21 @@ void FindNextFrame(int64_t initialindex, std::vector<int64_t>* framelist, FILE* 
     }
     else // file is open, continue doing something...
     {
+        std::string bufstr;
+        std::string hexstr;
+        std::stringstream ss;
+        bufstr.resize(131072);
+        fseek(lz4file, initialindex, SEEK_SET);
+        fread(const_cast<char*>(bufstr.data()), 1, 131072, lz4file);
+        for(int i=0; i < 131072; i++)
+        {
+            ss << std::hex << int(bufstr[i]);
+        }
+        hexstr = ss.str();
+        std::size_t found = hexstr.find("4224d18");
+        //std::size_t found = hexstr.find_first_of("04224d18");
+        printf("found offset: %ld\n", found);
+        /*
         size_t result = 0;
         fseek(lz4file, initialindex, SEEK_SET);
         char* buffer = NULL;
@@ -47,16 +62,37 @@ void FindNextFrame(int64_t initialindex, std::vector<int64_t>* framelist, FILE* 
         std::string mystr = ss.str();
         printf("hex string: %s\n", mystr.c_str());
         if(mystr.compare("4224d18") == 0)
+        {
+            framelist->push_back(initialindex + 4);
             printf("frame header found.\n");
+            FindNextFrame(initialindex+512, framelist, lz4file);
+        }
         else
+        {
             printf("frame header not found, comparison failed.\n");
+        }
         free(buffer);
+        */
     }
 }
 
 static std::string lz4img;
 static std::string lz4mnt;
 static std::vector<int64_t> frameindxlist;
+
+/*
+ *
+ *std::string str ("Please, replace the vowels in this sentence by asterisks.");
+  std::size_t found = str.find_first_of("aeiou");
+  while (found!=std::string::npos)
+  {
+    str[found]='*';
+    found=str.find_first_of("aeiou",found+1);
+  }
+
+  std::cout << str << '\n';
+
+ */
 
 /*
 void FindNextFrame(qint64 initialindex, QList<qint64>* framelist, QFile* wfi)
