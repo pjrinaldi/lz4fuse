@@ -253,6 +253,7 @@ static const struct fuse_operations wombat_oper = {
 */
 int main(int argc, char* argv[])
 {
+    //4194304 - default block size 4MB
     //printf("arg count: %d\n", argc);
     if(argc < 3) // no arguments given, display help..
     {
@@ -298,8 +299,8 @@ int main(int argc, char* argv[])
         curoffset = curoffset + 4;
         free(buffer);
     }
-    //for(int i=0; i < frameindxlist.size(); i++)
-    //    printf("frame index value: %d %ld\n", i, frameindxlist.at(i));
+    for(int i=0; i < frameindxlist.size(); i++)
+        printf("frame index value: %d %ld\n", i, frameindxlist.at(i));
     //printf("Initial Start to lz4 fuse mount from wfi code.\n");
     fclose(lz4imgfile);
 
