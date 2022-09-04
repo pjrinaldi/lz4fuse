@@ -266,7 +266,7 @@ int main(int argc, char* argv[])
     //printf("lz4img path: %s\n", lz4img.c_str());
     //printf("last . is %ld, last / is %ld.\n", find1, find2);
     ddimg = lz4img.substr(find2 + 1, find1 - find2 - 1);
-    printf("dd img file name for fuse: %s\n", ddimg.c_str());
+    //printf("dd img file name for fuse: %s\n", ddimg.c_str());
     //printf("substring of lz4 img path %s\n", lz4img.substr(find2 + 1, find1 - find2 - 1).c_str());
     //printf("lz4mnt path: %s\n", lz4mnt.c_str());
     FILE* lz4imgfile = NULL;
