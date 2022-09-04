@@ -32,46 +32,66 @@ void FindNextFrame(int64_t initialindex, std::vector<int64_t>* framelist, FILE* 
     }
     else // file is open, continue doing something...
     {
-        std::string bufstr;
-        std::string hexstr;
-        std::stringstream ss;
-        bufstr.resize(131072);
-        fseek(lz4file, initialindex, SEEK_SET);
-        fread(const_cast<char*>(bufstr.data()), 1, 131072, lz4file);
-        for(int i=0; i < 131072; i++)
+        // get file size
+        uint64_t curoffset = 0;
+        fseek(lz4file, 0, SEEK_END);
+        uint64_t lz4filesize = ftell(lz4file);
+        uint32_t header = 0x04224d18;
+        printf("lz4file size: %ld\n", lz4filesize);
+        rewind(lz4file);
+        //while(curoffset < lz4filesize)
+        while(curoffset < 131073)
         {
-            ss << std::hex << int(bufstr[i]);
+            std::string bufstr;
+            //std::string hexstr;
+            //std::stringstream ss;
+            bufstr.resize(131072);
+            fseek(lz4file, curoffset, SEEK_SET);
+            //fseek(lz4file, initialindex, SEEK_SET);
+            size_t bytesread = fread(const_cast<char*>(bufstr.data()), 1, 131072, lz4file);
+            printf("1st 4 bytes of str: %d %d %d %d\n", bufstr[0], bufstr[1], bufstr[2], bufstr[3]);
+            // 1st 4 %d of string are what i need, so i may need to sub loop over to find what i need...
+            std::size_t found = bufstr.find(std::to_string(header));
+            if(found == -1)
+                curoffset = curoffset + 131072;
+            else
+            {
+                printf("found: %ld\n", found);
+                printf("actual found: %ld\n", found - 3);
+                printf("actual file offset: %ld\n", curoffset + found - 3);
+                curoffset = curoffset + found + 1;
+            }
+            printf("curoffset: %ld\n", curoffset);
         }
-        hexstr = ss.str();
-        std::size_t found = hexstr.find("4224d18");
-        //std::size_t found = hexstr.find_first_of("04224d18");
-        printf("found offset: %ld\n", found);
         /*
-        size_t result = 0;
-        fseek(lz4file, initialindex, SEEK_SET);
-        char* buffer = NULL;
-        buffer = (char*)malloc(sizeof(char)*4);
-        result = fread(buffer, 1, 4, lz4file);
-        if(result != 4)
-            exit(1);
-        std::stringstream ss;
-        for(int i=0; i < 4; i++)
+        if(initialindex >= lz4filesize)
         {
-            ss << std::hex << (int)buffer[i];
-        }
-        std::string mystr = ss.str();
-        printf("hex string: %s\n", mystr.c_str());
-        if(mystr.compare("4224d18") == 0)
-        {
-            framelist->push_back(initialindex + 4);
-            printf("frame header found.\n");
-            FindNextFrame(initialindex+512, framelist, lz4file);
+            printf("done searching file for frame headers\n");
         }
         else
         {
-            printf("frame header not found, comparison failed.\n");
+            // some issue with switch from binary to hex, and losing leading zero's...
+            size_t bytesread = fread(const_cast<char*>(bufstr.data()), 1, 131072, lz4file);
+            for(int i=0; i < 131072; i++)
+            {
+                ss << std::hex << int(bufstr[i]);
+            }
+            hexstr = ss.str();
+            std::size_t found = hexstr.find("4224d18");
+            if(found == -1)
+            {
+                //printf("this should occur after the last frame near the end of the file\n");
+                FindNextFrame(initialindex + 131072 + 1, framelist, lz4file);
+            }
+            else
+            {
+                printf("initial index: %ld\n", initialindex);
+                printf("found offset: %ld\n", found/2);
+                printf("frame offset: %ld\n", initialindex + found/2);
+                framelist->push_back(initialindex + found/2);
+                FindNextFrame(initialindex + found/2 + 1, framelist, lz4file);
+            }
         }
-        free(buffer);
         */
     }
 }
@@ -79,20 +99,6 @@ void FindNextFrame(int64_t initialindex, std::vector<int64_t>* framelist, FILE* 
 static std::string lz4img;
 static std::string lz4mnt;
 static std::vector<int64_t> frameindxlist;
-
-/*
- *
- *std::string str ("Please, replace the vowels in this sentence by asterisks.");
-  std::size_t found = str.find_first_of("aeiou");
-  while (found!=std::string::npos)
-  {
-    str[found]='*';
-    found=str.find_first_of("aeiou",found+1);
-  }
-
-  std::cout << str << '\n';
-
- */
 
 /*
 void FindNextFrame(qint64 initialindex, QList<qint64>* framelist, QFile* wfi)
