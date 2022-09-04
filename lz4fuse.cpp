@@ -23,6 +23,7 @@
 
 #include <fuse3/fuse.h>
 
+/*
 void FindNextFrame(int64_t initialindex, std::vector<int64_t>* framelist, FILE* lz4file)
 {
     if(lz4file == NULL) // file is not open, so open it
@@ -63,41 +64,13 @@ void FindNextFrame(int64_t initialindex, std::vector<int64_t>* framelist, FILE* 
             }
             printf("curoffset: %ld\n", curoffset);
         }
-        /*
-        if(initialindex >= lz4filesize)
-        {
-            printf("done searching file for frame headers\n");
-        }
-        else
-        {
-            // some issue with switch from binary to hex, and losing leading zero's...
-            size_t bytesread = fread(const_cast<char*>(bufstr.data()), 1, 131072, lz4file);
-            for(int i=0; i < 131072; i++)
-            {
-                ss << std::hex << int(bufstr[i]);
-            }
-            hexstr = ss.str();
-            std::size_t found = hexstr.find("4224d18");
-            if(found == -1)
-            {
-                //printf("this should occur after the last frame near the end of the file\n");
-                FindNextFrame(initialindex + 131072 + 1, framelist, lz4file);
-            }
-            else
-            {
-                printf("initial index: %ld\n", initialindex);
-                printf("found offset: %ld\n", found/2);
-                printf("frame offset: %ld\n", initialindex + found/2);
-                framelist->push_back(initialindex + found/2);
-                FindNextFrame(initialindex + found/2 + 1, framelist, lz4file);
-            }
-        }
-        */
     }
 }
+*/
 
 static std::string lz4img;
 static std::string lz4mnt;
+static std::string ddimg;
 static std::vector<int64_t> frameindxlist;
 
 /*
@@ -280,7 +253,7 @@ static const struct fuse_operations wombat_oper = {
 */
 int main(int argc, char* argv[])
 {
-    printf("arg count: %d\n", argc);
+    //printf("arg count: %d\n", argc);
     if(argc < 3) // no arguments given, display help..
     {
 	printf("wrong number of arguments... display help\n");
@@ -288,12 +261,46 @@ int main(int argc, char* argv[])
     }
     lz4img = argv[1];
     lz4mnt = argv[2];
-    printf("lz4img path: %s\n", lz4img.c_str());
-    printf("lz4mnt path: %s\n", lz4mnt.c_str());
+    std::size_t find1 = lz4img.rfind(".");
+    std::size_t find2 = lz4img.rfind("/");
+    //printf("lz4img path: %s\n", lz4img.c_str());
+    //printf("last . is %ld, last / is %ld.\n", find1, find2);
+    ddimg = lz4img.substr(find2 + 1, find1 - find2 - 1);
+    printf("dd img file name for fuse: %s\n", ddimg.c_str());
+    //printf("substring of lz4 img path %s\n", lz4img.substr(find2 + 1, find1 - find2 - 1).c_str());
+    //printf("lz4mnt path: %s\n", lz4mnt.c_str());
     FILE* lz4imgfile = NULL;
     lz4imgfile = fopen(lz4img.c_str(), "rb");
-    FindNextFrame(0, &frameindxlist, lz4imgfile);
-    printf("Initial Start to lz4 fuse mount from wfi code.\n");
+    uint64_t curoffset = 0;
+    fseek(lz4imgfile, 0, SEEK_END);
+    uint64_t lz4filesize = 0;
+    lz4filesize = ftell(lz4imgfile);
+    //printf("lz4file size: %ld\n", lz4filesize);
+    rewind(lz4imgfile);
+    uint8_t frameheader[4];
+    frameheader[0] = 0x04;
+    frameheader[1] = 0x22;
+    frameheader[2] = 0x4d;
+    frameheader[3] = 0x18;
+
+    while(curoffset < lz4filesize)
+    {
+        uint8_t* buffer = NULL;
+        buffer = (uint8_t*)malloc(sizeof(uint8_t)*4);
+        fseek(lz4imgfile, curoffset, SEEK_SET);
+        fread(buffer, 1, 4, lz4imgfile);
+        //printf("1st 4 bytes of str: %d %d %d %d\n", buffer[0], buffer[1], buffer[2], buffer[3]);
+        if(buffer[0] == frameheader[0] && buffer[1] == frameheader[1] && buffer[2] == frameheader[2] && buffer[3] == frameheader[3])
+        {
+            frameindxlist.push_back(curoffset);
+            //printf("curoffset for header match: %ld\n", curoffset);
+        }
+        curoffset = curoffset + 4;
+        free(buffer);
+    }
+    //for(int i=0; i < frameindxlist.size(); i++)
+    //    printf("frame index value: %d %ld\n", i, frameindxlist.at(i));
+    //printf("Initial Start to lz4 fuse mount from wfi code.\n");
     fclose(lz4imgfile);
 
     return 0;
